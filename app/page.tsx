@@ -31,7 +31,7 @@ export default function Home() {
     setLoading(true);
     setError('');
 
-    const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Make at least 50 flashcards. Additionally, generate questions that may be asked based on the content in the notes in an exam:
+    const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Additionally, generate questions that may be asked based on the content in the notes in an exam:
 
 ${notes}
 
@@ -126,8 +126,8 @@ Output the flashcards in the following format:
     const starredFlashcards = flashcards.filter((card) => card.starred);
     const nonStarredFlashcards = flashcards.filter((card) => !card.starred);
 
-    // Randomly sample 2 non-starred flashcards
-    const sampleSize = Math.min(2, nonStarredFlashcards.length);
+    // Randomly sample 10 non-starred flashcards
+    const sampleSize = Math.min(10, nonStarredFlashcards.length);
     const randomNonStarredFlashcards = getRandomSample(nonStarredFlashcards, sampleSize);
 
     // Format the starred flashcards into the prompt
@@ -145,7 +145,7 @@ Output the flashcards in the following format:
     let nonStarredFlashcardsText = '';
     if (randomNonStarredFlashcards.length > 0) {
       nonStarredFlashcardsText =
-        'Here are some other topics I have studied. Please create new flashcards that explore these topics in new or deeper ways.\n\n';
+        'Here are some other topics I have studied. Please create new flashcards that explore these topics in new or deeper ways, as well as flashcards on topics covered in the notes but not already included in these flashcards.\n\n';
 
       randomNonStarredFlashcards.forEach((card) => {
         nonStarredFlashcardsText += `<flashcard>\n<front>\n${card.front}\n</front>\n<back>\n${card.back}\n</back>\n</flashcard>\n`;
