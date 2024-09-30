@@ -17,8 +17,15 @@ export default function Home() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showFront, setShowFront] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const [error, setError] = useState('');
   const [showStarredOnly, setShowStarredOnly] = useState(false);
+
+  // Helper function to get a random sample from an array
+  function getRandomSample<T>(array: T[], sampleSize: number): T[] {
+    const shuffled = array.slice().sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, sampleSize);
+  }
 
   const handleNext = async () => {
     setLoading(true);
@@ -59,7 +66,6 @@ Output the flashcards in the following format:
         </back>
     </flashcard>
 </flashcards>
-
 `;
 
     try {
@@ -70,7 +76,7 @@ Output the flashcards in the following format:
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini', // Use 'gpt-4' if you have access
+          model: 'gpt-4', // Use 'gpt-4' if you have access
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.7,
         }),
@@ -80,8 +86,6 @@ Output the flashcards in the following format:
 
       if (response.ok) {
         const assistantMessage = data.choices[0].message.content;
-
-        console.log(assistantMessage);
 
         // Parse the assistantMessage to extract flashcards
         const parser = new DOMParser();
@@ -114,6 +118,132 @@ Output the flashcards in the following format:
     }
   };
 
+  const generateMoreFlashcards = async () => {
+    setIsGeneratingMore(true);
+    setError('');
+
+    // Get starred and non-starred flashcards
+    const starredFlashcards = flashcards.filter((card) => card.starred);
+    const nonStarredFlashcards = flashcards.filter((card) => !card.starred);
+
+    // Randomly sample 2 non-starred flashcards
+    const sampleSize = Math.min(2, nonStarredFlashcards.length);
+    const randomNonStarredFlashcards = getRandomSample(nonStarredFlashcards, sampleSize);
+
+    // Format the starred flashcards into the prompt
+    let starredFlashcardsText = '';
+    if (starredFlashcards.length > 0) {
+      starredFlashcardsText =
+        'Here are some flashcards that I found challenging or important. Please create new flashcards that explore these topics in new or deeper ways.\n\n';
+
+      starredFlashcards.forEach((card) => {
+        starredFlashcardsText += `<flashcard>\n<front>\n${card.front}\n</front>\n<back>\n${card.back}\n</back>\n</flashcard>\n`;
+      });
+    }
+
+    // Format the randomly sampled non-starred flashcards into the prompt
+    let nonStarredFlashcardsText = '';
+    if (randomNonStarredFlashcards.length > 0) {
+      nonStarredFlashcardsText =
+        'Here are some other topics I have studied. Please create new flashcards that explore these topics in new or deeper ways.\n\n';
+
+      randomNonStarredFlashcards.forEach((card) => {
+        nonStarredFlashcardsText += `<flashcard>\n<front>\n${card.front}\n</front>\n<back>\n${card.back}\n</back>\n</flashcard>\n`;
+      });
+    }
+
+    const prompt = `Generate more comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Additionally, generate questions that may be asked based on the content in the notes in an exam.
+
+${notes}
+
+${starredFlashcardsText}
+
+${nonStarredFlashcardsText}
+
+Output the flashcards in the following format:
+
+<flashcards>
+    <flashcard>
+        <front>
+        What is BGP?
+        </front>
+        <back>
+        BGP is a protocol that allows Autonomous Systems to communicate with other Autonomous Systems via the Internet
+        </back>
+    </flashcard>
+    <flashcard>
+        <front>
+        What is IP?
+        </front>
+        <back>
+        IP is a protocol that enables the Internet.
+        </back>
+    </flashcard>
+    <flashcard>
+        <front>
+        Suppose an IP fragment with ID 1023, offset 128, MF=0, DF=0, TTL=172 and payload size 552 bytes is transmitted on a link with MTU 276 bytes. List the header values for the resultant fragments. You may assume no IP options; IP Len includes header, and that link MTU of x means an IP datagram of total length x can be sent over the link.
+        </front>
+        <back>
+        ID    Offset   MF   DF   TTL     Len
+        1023  128      1    0    171     276
+        1023  160      1    0    171     276    
+        1023  192      0    0    171     60
+        </back>
+    </flashcard>
+</flashcards>
+`;
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4', // Use 'gpt-4' if you have access
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const assistantMessage = data.choices[0].message.content;
+
+        // Parse the assistantMessage to extract flashcards
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(assistantMessage, 'text/xml');
+
+        const flashcardNodes = xmlDoc.getElementsByTagName('flashcard');
+
+        const parsedFlashcards: Flashcard[] = [];
+
+        for (let i = 0; i < flashcardNodes.length; i++) {
+          const flashcardNode = flashcardNodes[i];
+          const frontNode = flashcardNode.getElementsByTagName('front')[0];
+          const backNode = flashcardNode.getElementsByTagName('back')[0];
+
+          const front = frontNode ? frontNode.textContent?.trim() || '' : '';
+          const back = backNode ? backNode.textContent?.trim() || '' : '';
+
+          parsedFlashcards.push({ front, back, starred: false });
+        }
+
+        // Append the new flashcards to the existing ones
+        setFlashcards((prevFlashcards) => [...prevFlashcards, ...parsedFlashcards]);
+      } else {
+        setError(data.error.message || 'Error fetching data from OpenAI API');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('An error occurred while fetching data.');
+    } finally {
+      setIsGeneratingMore(false);
+    }
+  };
+
   const handleFlip = () => {
     setShowFront(!showFront);
   };
@@ -124,17 +254,23 @@ Output the flashcards in the following format:
   };
 
   const handleNextCard = () => {
-    setCurrentCardIndex((prevIndex) =>
-      Math.min(prevIndex + 1, filteredFlashcards.length - 1)
-    );
-    setShowFront(true);
+    if (currentCardIndex === filteredFlashcards.length - 1) {
+      // At the last card, generate more flashcards
+      if (!isGeneratingMore) {
+        generateMoreFlashcards();
+      }
+    } else {
+      setCurrentCardIndex((prevIndex) =>
+        Math.min(prevIndex + 1, filteredFlashcards.length - 1)
+      );
+      setShowFront(true);
+    }
   };
 
   const handleToggleStar = () => {
     const updatedFlashcards = [...flashcards];
-    const currentIndexInAll = flashcards.findIndex(
-      (card) => card === filteredFlashcards[currentCardIndex]
-    );
+    const currentCard = filteredFlashcards[currentCardIndex];
+    const currentIndexInAll = flashcards.findIndex((card) => card === currentCard);
     updatedFlashcards[currentIndexInAll].starred = !updatedFlashcards[currentIndexInAll].starred;
     setFlashcards(updatedFlashcards);
   };
@@ -219,12 +355,17 @@ Output the flashcards in the following format:
             </button>
             <button
               onClick={handleNextCard}
-              disabled={currentCardIndex === filteredFlashcards.length - 1}
+              disabled={
+                isGeneratingMore && currentCardIndex === filteredFlashcards.length - 1
+              }
               className="bg-gray-500 text-white p-2 rounded disabled:opacity-50"
             >
               Next
             </button>
           </div>
+          {isGeneratingMore && (
+            <p className="text-gray-500 mt-4">Generating more flashcards...</p>
+          )}
           <div className="w-80 flex justify-center mt-4">
             <button
               onClick={handleToggleShowStarred}
