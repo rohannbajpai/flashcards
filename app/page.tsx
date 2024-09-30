@@ -31,7 +31,7 @@ export default function Home() {
     setLoading(true);
     setError('');
 
-    const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Additionally, generate questions that may be asked based on the content in the notes in an exam:
+    const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Make at least 50 flashcards. Additionally, generate questions that may be asked based on the content in the notes in an exam:
 
 ${notes}
 
@@ -145,20 +145,25 @@ Output the flashcards in the following format:
     let nonStarredFlashcardsText = '';
     if (randomNonStarredFlashcards.length > 0) {
       nonStarredFlashcardsText =
-        'Here are some other topics I have studied. Please create new flashcards that explore these topics in new or deeper ways, as well as flashcards on topics covered in the notes but not already included in these flashcards.\n\n';
+        'Here are some other topics I have studied. Please create new flashcards that explore these topics in new or deeper ways.\n\n';
 
       randomNonStarredFlashcards.forEach((card) => {
         nonStarredFlashcardsText += `<flashcard>\n<front>\n${card.front}\n</front>\n<back>\n${card.back}\n</back>\n</flashcard>\n`;
       });
     }
 
-    const prompt = `Generate more comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Additionally, generate questions that may be asked based on the content in the notes in an exam.
+    const prompt = `Generate more comprehensive flashcards based on the following notes. Ensure there are enough flashcards to cover all of the uploaded notes. Additionally, generate questions that may be asked based on the content in the notes in an exam.
 
-${notes}
 
+
+These flashcards were starred for further review:
 ${starredFlashcardsText}
 
+And these are a sample of flashcards that have been successfully completed:
 ${nonStarredFlashcardsText}
+
+These are the notes:
+${notes}
 
 Output the flashcards in the following format:
 
