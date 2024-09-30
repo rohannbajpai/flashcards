@@ -2,6 +2,7 @@
 'use client'
 import { useState } from 'react';
 import Image from 'next/image';
+import logo from './images/logo.png';
 
 interface Flashcard {
   front: string;
@@ -21,7 +22,7 @@ export default function Home() {
     setLoading(true);
     setError('');
 
-    const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes:
+    const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Make at least 50 flashcards. Additonally, generate questions that may be asked based on the content in the notes in an exam:
 
 ${notes}
 
@@ -42,6 +43,18 @@ Output the flashcards in the following format:
         </front>
         <back>
         IP is a protocol that enables the Internet.
+        </back>
+    </flashcard>
+    <flashcard>
+        <front>
+        Suppose a IP fragment with ID 1023, offset 128, MF=0, DF=0, TTL=172 and payload size 552 bytes is transmitted on a link with MTU 276 bytes. List the header values for the resultant frag- ments. You may assume no IP options; IP Len includes header, and that link MTU of x means an IP datagram of total length x can be sent over the link.
+        </front>
+        <back>
+        ID    Offset   MF   DF   TTL     Len
+        0      1023    128   0     171    276
+        1      1023    160   0     171    276    
+        2      1023    192   0     171    60
+        3      0       0     0     171    0    
         </back>
     </flashcard>
 </flashcards>
@@ -118,14 +131,15 @@ Output the flashcards in the following format:
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       {flashcards.length === 0 ? (
         <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-         <Image
+        <Image
           className="dark:invert"
-          src="/images/logo.png"
+          src={logo}
           alt="Your Custom Logo"
-          width={50} // Adjust width as needed
-          height={50} // Adjust height as needed
+          width={50} /* Adjust width as needed */
+          height={50} /* Adjust height as needed */
           priority
         />
+
           <div className="max-w-md">
             <h1 className="text-2xl font-bold mb-4">Flashcard Generator</h1>
             <div className="mb-4">
