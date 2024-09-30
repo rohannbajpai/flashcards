@@ -1,5 +1,5 @@
 // app/page.tsx
-'use client'
+'use client';
 import { useState } from 'react';
 import Image from 'next/image';
 import logo from './images/logo.png';
@@ -7,6 +7,7 @@ import logo from './images/logo.png';
 interface Flashcard {
   front: string;
   back: string;
+  starred: boolean;
 }
 
 export default function Home() {
@@ -17,12 +18,13 @@ export default function Home() {
   const [showFront, setShowFront] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
 
   const handleNext = async () => {
     setLoading(true);
     setError('');
 
-    const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Make at least 50 flashcards. Additonally, generate questions that may be asked based on the content in the notes in an exam:
+    const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Make at least 50 flashcards. Additionally, generate questions that may be asked based on the content in the notes in an exam:
 
 ${notes}
 
@@ -47,14 +49,13 @@ Output the flashcards in the following format:
     </flashcard>
     <flashcard>
         <front>
-        Suppose a IP fragment with ID 1023, offset 128, MF=0, DF=0, TTL=172 and payload size 552 bytes is transmitted on a link with MTU 276 bytes. List the header values for the resultant frag- ments. You may assume no IP options; IP Len includes header, and that link MTU of x means an IP datagram of total length x can be sent over the link.
+        Suppose an IP fragment with ID 1023, offset 128, MF=0, DF=0, TTL=172 and payload size 552 bytes is transmitted on a link with MTU 276 bytes. List the header values for the resultant fragments. You may assume no IP options; IP Len includes header, and that link MTU of x means an IP datagram of total length x can be sent over the link.
         </front>
         <back>
         ID    Offset   MF   DF   TTL     Len
-        0      1023    128   0     171    276
-        1      1023    160   0     171    276    
-        2      1023    192   0     171    60
-        3      0       0     0     171    0    
+        1023  128      1    0    171     276
+        1023  160      1    0    171     276    
+        1023  192      0    0    171     60
         </back>
     </flashcard>
 </flashcards>
@@ -70,9 +71,7 @@ Output the flashcards in the following format:
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini', // Use 'gpt-4' if you have access
-          messages: [
-            { role: 'user', content: prompt }
-          ],
+          messages: [{ role: 'user', content: prompt }],
           temperature: 0.7,
         }),
       });
@@ -84,7 +83,7 @@ Output the flashcards in the following format:
 
         // Parse the assistantMessage to extract flashcards
         const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(assistantMessage, "text/xml");
+        const xmlDoc = parser.parseFromString(assistantMessage, 'text/xml');
 
         const flashcardNodes = xmlDoc.getElementsByTagName('flashcard');
 
@@ -98,7 +97,7 @@ Output the flashcards in the following format:
           const front = frontNode ? frontNode.textContent?.trim() || '' : '';
           const back = backNode ? backNode.textContent?.trim() || '' : '';
 
-          parsedFlashcards.push({ front, back });
+          parsedFlashcards.push({ front, back, starred: false });
         }
 
         setFlashcards(parsedFlashcards);
@@ -123,22 +122,43 @@ Output the flashcards in the following format:
   };
 
   const handleNextCard = () => {
-    setCurrentCardIndex((prevIndex) => Math.min(prevIndex + 1, flashcards.length - 1));
+    setCurrentCardIndex((prevIndex) =>
+      Math.min(prevIndex + 1, filteredFlashcards.length - 1)
+    );
     setShowFront(true);
   };
+
+  const handleToggleStar = () => {
+    const updatedFlashcards = [...flashcards];
+    const currentIndexInAll = flashcards.findIndex(
+      (card) => card === filteredFlashcards[currentCardIndex]
+    );
+    updatedFlashcards[currentIndexInAll].starred = !updatedFlashcards[currentIndexInAll].starred;
+    setFlashcards(updatedFlashcards);
+  };
+
+  const handleToggleShowStarred = () => {
+    setShowStarredOnly(!showStarredOnly);
+    setCurrentCardIndex(0);
+    setShowFront(true);
+  };
+
+  const filteredFlashcards = showStarredOnly
+    ? flashcards.filter((card) => card.starred)
+    : flashcards;
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       {flashcards.length === 0 ? (
         <main className="flex flex-col gap-8 row-start-2 items-center sm:items-center">
-        <Image
-          className="mx-auto block"
-          src={logo}
-          alt="Your Custom Logo"
-          width={50} /* Adjust width as needed */
-          height={50} /* Adjust height as needed */
-          priority
-        />
+          <Image
+            className="mx-auto block"
+            src={logo}
+            alt="Your Custom Logo"
+            width={50} /* Adjust width as needed */
+            height={50} /* Adjust height as needed */
+            priority
+          />
 
           <div className="max-w-md">
             <div className="mb-4">
@@ -169,14 +189,23 @@ Output the flashcards in the following format:
           </div>
         </main>
       ) : (
-        <main className="flex flex-col gap-8 row-start-2 items-center sm:items-center">
+        <main className="flex flex-col gap-4 row-start-2 items-center sm:items-center">
           <div
             onClick={handleFlip}
-            className="cursor-pointer border border-gray-300 rounded p-8 text-center mb-4 w-80 h-40 flex items-center justify-center"
+            className="relative cursor-pointer border border-gray-300 rounded p-8 text-center mb-4 w-80 h-40 flex items-center justify-center"
           >
             {showFront
-              ? flashcards[currentCardIndex].front
-              : flashcards[currentCardIndex].back}
+              ? filteredFlashcards[currentCardIndex]?.front
+              : filteredFlashcards[currentCardIndex]?.back}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleStar();
+              }}
+              className="absolute top-2 right-2"
+            >
+              {filteredFlashcards[currentCardIndex]?.starred ? '★' : '☆'}
+            </button>
           </div>
           <div className="flex justify-between w-80">
             <button
@@ -188,12 +217,23 @@ Output the flashcards in the following format:
             </button>
             <button
               onClick={handleNextCard}
-              disabled={currentCardIndex === flashcards.length - 1}
+              disabled={currentCardIndex === filteredFlashcards.length - 1}
               className="bg-gray-500 text-white p-2 rounded disabled:opacity-50"
             >
               Next
             </button>
           </div>
+          <div className="w-80 flex justify-center mt-4">
+            <button
+              onClick={handleToggleShowStarred}
+              className="bg-blue-500 text-white p-2 rounded"
+            >
+              {showStarredOnly ? 'Show All Cards' : 'Show Starred Only'}
+            </button>
+          </div>
+          {filteredFlashcards.length === 0 && showStarredOnly && (
+            <p className="text-red-500 mt-4">No starred cards available.</p>
+          )}
         </main>
       )}
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
