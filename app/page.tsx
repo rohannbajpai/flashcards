@@ -21,7 +21,7 @@ export default function Home() {
     setLoading(true);
     setError('');
 
-    const prompt = `Generate flashcards based on the following notes:
+    const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes:
 
 ${notes}
 
@@ -118,14 +118,14 @@ Output the flashcards in the following format:
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       {flashcards.length === 0 ? (
         <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-          <Image
-            className="dark:invert"
-            src="https://nextjs.org/icons/next.svg"
-            alt="Next.js logo"
-            width={180}
-            height={38}
-            priority
-          />
+         <Image
+          className="dark:invert"
+          src="/images/logo.png"
+          alt="Your Custom Logo"
+          width={50} // Adjust width as needed
+          height={50} // Adjust height as needed
+          priority
+        />
           <div className="max-w-md">
             <h1 className="text-2xl font-bold mb-4">Flashcard Generator</h1>
             <div className="mb-4">
