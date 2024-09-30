@@ -81,6 +81,8 @@ Output the flashcards in the following format:
       if (response.ok) {
         const assistantMessage = data.choices[0].message.content;
 
+        console.log(assistantMessage);
+
         // Parse the assistantMessage to extract flashcards
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(assistantMessage, 'text/xml');
