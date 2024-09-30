@@ -1,0 +1,29 @@
+Modify this next.js app to have a landing page that asks for a openai api key and notes.
+
+The user then clicks a "next button"
+
+The website then makes a request to the openai api 4o-mini to make flashcards with a prompt that specifies the output format with a few examples. (few shot examples) For example:
+
+<flashcards>
+    <flashcard>
+         <front>
+         What is BGP?
+         </front>
+         <back>
+         BGP is a protocol that allows Autonomous Systems
+         to communicate with other Autonomous Systems via
+         the Internet
+         </back>
+    </flashcard>
+    <flashcard>
+         <front>
+         What is IP?
+         </front>
+         <back>
+         IP is a protocol that enables the Internet.
+         </back>
+    </flashcard>
+</flashcard>
+
+The client side should then take this response, and parse it to create flashcards that can be flipped by clicking on them,
+and navigated by clicking back and forth

@@ -1,100 +1,190 @@
-import Image from "next/image";
+// app/page.tsx
+
+import { useState } from 'react';
+import Image from 'next/image';
+
+interface Flashcard {
+  front: string;
+  back: string;
+}
 
 export default function Home() {
+  const [apiKey, setApiKey] = useState('');
+  const [notes, setNotes] = useState('');
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [showFront, setShowFront] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleNext = async () => {
+    setLoading(true);
+    setError('');
+
+    const prompt = `Generate flashcards based on the following notes:
+
+${notes}
+
+Output the flashcards in the following format:
+
+<flashcards>
+    <flashcard>
+        <front>
+        What is BGP?
+        </front>
+        <back>
+        BGP is a protocol that allows Autonomous Systems to communicate with other Autonomous Systems via the Internet
+        </back>
+    </flashcard>
+    <flashcard>
+        <front>
+        What is IP?
+        </front>
+        <back>
+        IP is a protocol that enables the Internet.
+        </back>
+    </flashcard>
+</flashcards>
+
+`;
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini', // Use 'gpt-4' if you have access
+          messages: [
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const assistantMessage = data.choices[0].message.content;
+
+        // Parse the assistantMessage to extract flashcards
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(assistantMessage, "text/xml");
+
+        const flashcardNodes = xmlDoc.getElementsByTagName('flashcard');
+
+        const parsedFlashcards: Flashcard[] = [];
+
+        for (let i = 0; i < flashcardNodes.length; i++) {
+          const flashcardNode = flashcardNodes[i];
+          const frontNode = flashcardNode.getElementsByTagName('front')[0];
+          const backNode = flashcardNode.getElementsByTagName('back')[0];
+
+          const front = frontNode ? frontNode.textContent?.trim() || '' : '';
+          const back = backNode ? backNode.textContent?.trim() || '' : '';
+
+          parsedFlashcards.push({ front, back });
+        }
+
+        setFlashcards(parsedFlashcards);
+      } else {
+        setError(data.error.message || 'Error fetching data from OpenAI API');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('An error occurred while fetching data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFlip = () => {
+    setShowFront(!showFront);
+  };
+
+  const handlePrevCard = () => {
+    setCurrentCardIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+    setShowFront(true);
+  };
+
+  const handleNextCard = () => {
+    setCurrentCardIndex((prevIndex) => Math.min(prevIndex + 1, flashcards.length - 1));
+    setShowFront(true);
+  };
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {flashcards.length === 0 ? (
+        <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
+          <Image
+            className="dark:invert"
+            src="https://nextjs.org/icons/next.svg"
+            alt="Next.js logo"
+            width={180}
+            height={38}
+            priority
+          />
+          <div className="max-w-md">
+            <h1 className="text-2xl font-bold mb-4">Flashcard Generator</h1>
+            <div className="mb-4">
+              <label className="block mb-2">OpenAI API Key:</label>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Notes:</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded h-32"
+              />
+            </div>
+            <button
+              onClick={handleNext}
+              disabled={loading}
+              className="w-full bg-black text-white p-2 rounded"
+            >
+              {loading ? 'Generating...' : 'Next'}
+            </button>
+            {error && <p className="text-red-500 mt-4">{error}</p>}
+          </div>
+        </main>
+      ) : (
+        <main className="flex flex-col gap-8 row-start-2 items-center sm:items-center">
+          <div
+            onClick={handleFlip}
+            className="cursor-pointer border border-gray-300 rounded p-8 text-center mb-4 w-80 h-40 flex items-center justify-center"
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
+            {showFront
+              ? flashcards[currentCardIndex].front
+              : flashcards[currentCardIndex].back}
+          </div>
+          <div className="flex justify-between w-80">
+            <button
+              onClick={handlePrevCard}
+              disabled={currentCardIndex === 0}
+              className="bg-gray-500 text-white p-2 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              onClick={handleNextCard}
+              disabled={currentCardIndex === flashcards.length - 1}
+              className="bg-gray-500 text-white p-2 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </main>
+      )}
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+        {/* Your existing footer content */}
       </footer>
     </div>
   );
