@@ -49,7 +49,6 @@ Output the flashcards in the following format:
     </flashcard>
     <flashcard>
         <front>
-        What is IP?
         </front>
         <back>
         </back>
@@ -174,7 +173,6 @@ Output the flashcards in the following format:
     </flashcard>
     <flashcard>
         <front>
-        What is IP?
         </front>
         <back>
         </back>
