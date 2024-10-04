@@ -279,103 +279,103 @@ Output the flashcards in the following format:
     ? flashcards.filter((card) => card.starred)
     : flashcards;
 
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      {flashcards.length === 0 ? (
-        <main className="flex flex-col gap-8 row-start-2 items-center sm:items-center">
-          <Image
-            className="mx-auto block"
-            src={logo}
-            alt="Your Custom Logo"
-            width={50} /* Adjust width as needed */
-            height={50} /* Adjust height as needed */
-            priority
-          />
-
-          <div className="max-w-md">
-            <div className="mb-4">
-              <label className="block mb-2">OpenAI API Key:</label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded"
-              />
+    return (
+      <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+        {flashcards.length === 0 ? (
+          <main className="flex flex-col gap-8 row-start-2 items-center sm:items-center">
+            <Image
+              className="mx-auto block"
+              src={logo}
+              alt="Your Custom Logo"
+              width={50} /* Adjust width as needed */
+              height={50} /* Adjust height as needed */
+              priority
+            />
+  
+            <div className="max-w-md">
+              <div className="mb-4">
+                <label className="block mb-2">OpenAI API Key:</label>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="w-full p-4 border border-gray-300 rounded text-black text-lg"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block mb-2">Notes:</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full p-4 border border-gray-300 rounded h-48 text-black text-lg"
+                />
+              </div>
+              <button
+                onClick={handleNext}
+                disabled={loading}
+                className="w-full bg-black text-white p-3 rounded text-lg"
+              >
+                {loading ? 'Generating...' : 'Next'}
+              </button>
+              {error && <p className="text-red-500 mt-4">{error}</p>}
             </div>
-            <div className="mb-4">
-              <label className="block mb-2">Notes:</label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded h-32"
-              />
+          </main>
+        ) : (
+          <main className="flex flex-col gap-6 row-start-2 items-center sm:items-center">
+            <div
+              onClick={handleFlip}
+              className="relative cursor-pointer border border-gray-300 rounded p-12 text-center mb-4 w-96 h-60 flex items-center justify-center text-lg"
+            >
+              {showFront
+                ? filteredFlashcards[currentCardIndex]?.front
+                : filteredFlashcards[currentCardIndex]?.back}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleStar();
+                }}
+                className="absolute top-2 right-2 text-2xl"
+              >
+                {filteredFlashcards[currentCardIndex]?.starred ? '★' : '☆'}
+              </button>
             </div>
-            <button
-              onClick={handleNext}
-              disabled={loading}
-              className="w-full bg-black text-white p-2 rounded"
-            >
-              {loading ? 'Generating...' : 'Next'}
-            </button>
-            {error && <p className="text-red-500 mt-4">{error}</p>}
-          </div>
-        </main>
-      ) : (
-        <main className="flex flex-col gap-4 row-start-2 items-center sm:items-center">
-          <div
-            onClick={handleFlip}
-            className="relative cursor-pointer border border-gray-300 rounded p-8 text-center mb-4 w-80 h-40 flex items-center justify-center"
-          >
-            {showFront
-              ? filteredFlashcards[currentCardIndex]?.front
-              : filteredFlashcards[currentCardIndex]?.back}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleStar();
-              }}
-              className="absolute top-2 right-2"
-            >
-              {filteredFlashcards[currentCardIndex]?.starred ? '★' : '☆'}
-            </button>
-          </div>
-          <div className="flex justify-between w-80">
-            <button
-              onClick={handlePrevCard}
-              disabled={currentCardIndex === 0}
-              className="bg-gray-500 text-white p-2 rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={handleNextCard}
-              disabled={
-                isGeneratingMore && currentCardIndex === filteredFlashcards.length - 1
-              }
-              className="bg-gray-500 text-white p-2 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-          {isGeneratingMore && (
-            <p className="text-gray-500 mt-4">Generating more flashcards...</p>
-          )}
-          <div className="w-80 flex justify-center mt-4">
-            <button
-              onClick={handleToggleShowStarred}
-              className="bg-blue-500 text-white p-2 rounded"
-            >
-              {showStarredOnly ? 'Show All Cards' : 'Show Starred Only'}
-            </button>
-          </div>
-          {filteredFlashcards.length === 0 && showStarredOnly && (
-            <p className="text-red-500 mt-4">No starred cards available.</p>
-          )}
-        </main>
-      )}
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        {/* Your existing footer content */}
-      </footer>
-    </div>
-  );
-}
+            <div className="flex justify-between w-96">
+              <button
+                onClick={handlePrevCard}
+                disabled={currentCardIndex === 0}
+                className="bg-gray-500 text-white p-3 rounded disabled:opacity-50 text-lg"
+              >
+                Previous
+              </button>
+              <button
+                onClick={handleNextCard}
+                disabled={
+                  isGeneratingMore && currentCardIndex === filteredFlashcards.length - 1
+                }
+                className="bg-gray-500 text-white p-3 rounded disabled:opacity-50 text-lg"
+              >
+                Next
+              </button>
+            </div>
+            {isGeneratingMore && (
+              <p className="text-gray-500 mt-4">Generating more flashcards...</p>
+            )}
+            <div className="w-96 flex justify-center mt-6">
+              <button
+                onClick={handleToggleShowStarred}
+                className="bg-blue-500 text-white p-3 rounded text-lg"
+              >
+                {showStarredOnly ? 'Show All Cards' : 'Show Starred Only'}
+              </button>
+            </div>
+            {filteredFlashcards.length === 0 && showStarredOnly && (
+              <p className="text-red-500 mt-4">No starred cards available.</p>
+            )}
+          </main>
+        )}
+        <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
+          {/* Your existing footer content */}
+        </footer>
+      </div>
+    );
+  }
