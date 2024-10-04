@@ -33,17 +33,18 @@ export default function Home() {
 
     const prompt = `Generate comprehensive flashcards based on the following notes. Ensure the flashcards cover all of the uploaded notes. Make at least 50 flashcards. Additionally, generate questions that may be asked based on the content in the notes in an exam:
 
+IMPORTANT: notes are in the <notes></notes> tag and flashcards should only be generated from those notes:
+<notes>
 ${notes}
+</notes>
 
 Output the flashcards in the following format:
 
 <flashcards>
     <flashcard>
         <front>
-        What is BGP?
         </front>
         <back>
-        BGP is a protocol that allows Autonomous Systems to communicate with other Autonomous Systems via the Internet
         </back>
     </flashcard>
     <flashcard>
@@ -51,20 +52,15 @@ Output the flashcards in the following format:
         What is IP?
         </front>
         <back>
-        IP is a protocol that enables the Internet.
         </back>
     </flashcard>
     <flashcard>
         <front>
-        Suppose an IP fragment with ID 1023, offset 128, MF=0, DF=0, TTL=172 and payload size 552 bytes is transmitted on a link with MTU 276 bytes. List the header values for the resultant fragments. You may assume no IP options; IP Len includes header, and that link MTU of x means an IP datagram of total length x can be sent over the link.
         </front>
         <back>
-        ID    Offset   MF   DF   TTL     Len
-        1023  128      1    0    171     276
-        1023  160      1    0    171     276    
-        1023  192      0    0    171     60
         </back>
     </flashcard>
+    <!-- more flashcards -->
 </flashcards>
 `;
 
@@ -162,18 +158,18 @@ ${starredFlashcardsText}
 And these are a sample of flashcards that have been successfully completed:
 ${nonStarredFlashcardsText}
 
-These are the notes:
+IMPORTANT: notes are in the <notes></notes> tag and flashcards should only be generated from those notes:
+<notes>
 ${notes}
+</notes>
 
 Output the flashcards in the following format:
 
 <flashcards>
     <flashcard>
         <front>
-        What is BGP?
         </front>
         <back>
-        BGP is a protocol that allows Autonomous Systems to communicate with other Autonomous Systems via the Internet
         </back>
     </flashcard>
     <flashcard>
@@ -181,19 +177,14 @@ Output the flashcards in the following format:
         What is IP?
         </front>
         <back>
-        IP is a protocol that enables the Internet.
         </back>
     </flashcard>
     <flashcard>
         <front>
-        Suppose an IP fragment with ID 1023, offset 128, MF=0, DF=0, TTL=172 and payload size 552 bytes is transmitted on a link with MTU 276 bytes. List the header values for the resultant fragments. You may assume no IP options; IP Len includes header, and that link MTU of x means an IP datagram of total length x can be sent over the link.
         </front>
         <back>
-        ID    Offset   MF   DF   TTL     Len
-        1023  128      1    0    171     276
-        1023  160      1    0    171     276    
-        1023  192      0    0    171     60
         </back>
+        <!-- more flashcards -->
     </flashcard>
 </flashcards>
 `;
